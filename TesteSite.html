@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>BikeStore</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+body{background:#eee;}
+
+/* HEADER */
+header{
+  background:#ff2b2b;
+  padding:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:white;
+}
+
+.logo{font-size:22px;font-weight:bold;}
+
+.search{width:40%;}
+.search input{width:100%;padding:8px;border:none;border-radius:5px;}
+
+.cart-btn{cursor:pointer;}
+
+/* CATEGORIAS */
+.categorias{
+  padding:10px;
+  background:#fff;
+  display:flex;
+  gap:10px;
+}
+
+.categorias button{
+  padding:6px 10px;
+  border:none;
+  background:#ddd;
+  cursor:pointer;
+}
+
+/* BANNER */
+.banner{
+  background:linear-gradient(90deg,#ff2b2b,#ff6b6b);
+  color:white;
+  padding:40px;
+}
+
+/* PRODUTOS */
+.container{padding:20px;}
+
+.produtos{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:white;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.card img{width:100%;height:150px;object-fit:cover;}
+.preco{color:green;font-weight:bold;margin:10px 0;}
+
+/* CARRINHO */
+#carrinho{
+  position:fixed;
+  right:-320px;
+  top:0;
+  width:300px;
+  height:100%;
+  background:white;
+  padding:10px;
+  transition:0.3s;
+}
+
+#overlay{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  display:none;
+}
+
+/* RESPONSIVO */
+@media(max-width:768px){
+  header{flex-direction:column;}
+  .search{width:100%;}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🚴 BikeStore</div>
+
+  <div class="search">
+    <input placeholder="Buscar..." id="busca">
+  </div>
+
+  <div class="cart-btn" onclick="toggleCarrinho()">
+    🛒 (<span id="contador">0</span>)
+  </div>
+</header>
+
+<!-- categorias -->
+<div class="categorias">
+  <button onclick="filtrar('')">Todas</button>
+  <button onclick="filtrar('mtb')">MTB</button>
+  <button onclick="filtrar('speed')">Speed</button>
+  <button onclick="filtrar('urbana')">Urbana</button>
+  <button onclick="filtrar('bmx')">BMX</button>
+</div>
+
+<div class="banner">
+  <h1>Promoções de Bikes</h1>
+</div>
+
+<div class="container">
+  <div class="produtos" id="produtos"></div>
+</div>
+
+<div id="overlay" onclick="fecharCarrinho()"></div>
+
+<div id="carrinho">
+  <h3>Carrinho</h3>
+  <div id="listaCarrinho"></div>
+  <div id="total"></div>
+</div>
+<script src="carrinho.js"></script>
+
+<script>
+const API = "http://localhost:3000";
+
+const imagens = {
+  1:"https://images.unsplash.com/photo-1518655048521-f130df041f66",
+  2:"https://images.unsplash.com/photo-1508973375-3dcaed82a5c3",
+  3:"https://images.unsplash.com/photo-1485965120184-e220f721d03e",
+  4:"https://images.unsplash.com/photo-1595433562696-6f5f9f6c6c90",
+  5:"https://images.unsplash.com/photo-1601233749202-95d04d5bcb2f",
+  6:"https://images.unsplash.com/photo-1593766827228-8737b4534aa6"
+};
+
+/* carrinho abrir/fechar */
+function toggleCarrinho(){
+  const c = document.getElementById("carrinho");
+  const overlay = document.getElementById("overlay");
+
+  const right = window.getComputedStyle(c).right;
+
+  if(right === "0px"){
+    c.style.right = "-320px";
+    overlay.style.display="none";
+  }else{
+    c.style.right="0px";
+    overlay.style.display="block";
+  }
+}
+
+function fecharCarrinho(){
+  document.getElementById("carrinho").style.right="-320px";
+  document.getElementById("overlay").style.display="none";
+}
+
+/* render produtos COM BOTÃO */
+function renderProdutos(produtos){
+  const container = document.getElementById("produtos");
+  container.innerHTML="";
+
+  produtos.forEach(p=>{
+    container.innerHTML+=`
+      <div class="card" onclick="abrirProduto(${p.id})">
+        <img src="${imagens[p.id]}">
+        <h3>${p.nome}</h3>
+        <div class="preco">R$ ${p.preco}</div>
+
+        <button onclick='event.stopPropagation(); addCarrinho(${JSON.stringify(p)})'>
+          🛒 Adicionar
+        </button>
+      </div>
+    `;
+  });
+}
+
+/* abrir página produto */
+function abrirProduto(id){
+  window.location.href = "produto.html?id="+id;
+}
+
+/* carregar produtos */
+async function carregarProdutos(){
+  const res = await fetch(API+"/produtos");
+  const data = await res.json();
+  renderProdutos(data);
+}
+
+/* busca */
+document.getElementById("busca").addEventListener("input", async e=>{
+  const res = await fetch(API+"/produtos?busca="+e.target.value);
+  renderProdutos(await res.json());
+});
+
+/* categoria */
+async function filtrar(cat){
+  const res = await fetch(API+"/produtos?categoria="+cat);
+  renderProdutos(await res.json());
+}
+
+/* iniciar */
+carregarProdutos();
+atualizarCarrinhoUI();
+</script>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BikeStore</title>
+
+<style>
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background:#f5f5f5;
+}
+
+/* HEADER */
+header {
+    background:#111;
+    color:white;
+    padding:15px 40px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.logo {
+    font-size:22px;
+    font-weight:bold;
+    color:red;
+}
+
+nav a {
+    color:white;
+    margin-left:20px;
+    text-decoration:none;
+}
+
+/* BANNER */
+.banner {
+    background:linear-gradient(to right, #000, #444);
+    color:white;
+    padding:60px 40px;
+}
+
+.banner h1 {
+    font-size:40px;
+}
+
+.banner button {
+    margin-top:20px;
+    padding:12px 20px;
+    background:red;
+    border:none;
+    color:white;
+    cursor:pointer;
+}
+
+/* PRODUTOS */
+.section {
+    padding:40px;
+}
+
+.grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap:20px;
+}
+
+.card {
+    background:white;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    transition:0.3s;
+}
+
+.card:hover {
+    transform:translateY(-5px);
+}
+
+.card img {
+    width:100%;
+    height:180px;
+    object-fit:cover;
+}
+
+.card-body {
+    padding:15px;
+}
+
+.card h3 {
+    font-size:16px;
+}
+
+.preco {
+    color:red;
+    font-size:20px;
+    margin:10px 0;
+}
+
+.btn {
+    background:red;
+    color:white;
+    border:none;
+    padding:10px;
+    width:100%;
+    cursor:pointer;
+}
+
+/* CARRINHO */
+.carrinho {
+    position:fixed;
+    right:0;
+    top:0;
+    width:300px;
+    height:100%;
+    background:#111;
+    color:white;
+    padding:15px;
+    overflow:auto;
+}
+
+.item {
+    border-bottom:1px solid #333;
+    margin-bottom:10px;
+    padding-bottom:10px;
+}
+
+.total {
+    font-size:20px;
+    color:red;
+}
+
+/* WHATS */
+.whats {
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#25D366;
+    padding:15px;
+    border-radius:50%;
+    color:white;
+    text-decoration:none;
+}
+
+/* FOOTER */
+footer {
+    background:#111;
+    color:white;
+    padding:30px;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">BikeStore</div>
+    <nav>
+        <a href="#">Home</a>
+        <a href="#">Bikes</a>
+        <a href="#">Contato</a>
+    </nav>
+</header>
+
+<section class="banner">
+    <h1>As melhores bikes você encontra aqui 🚴</h1>
+    <button>Ver produtos</button>
+</section>
+
+<section class="section">
+    <h2>Bicicletas</h2>
+    <div class="grid" id="produtos"></div>
+</section>
+
+<div class="carrinho">
+    <h2>Carrinho</h2>
+    <div id="lista"></div>
+    <p class="total">Total: R$ <span id="total">0</span></p>
+    <button onclick="finalizar()" class="btn">Finalizar</button>
+</div>
+
+<a id="whats" class="whats" target="_blank">💬</a>
+
+<footer>
+    <p>© 2026 BikeStore</p>
+    <p>Instagram | WhatsApp</p>
+</footer>
+
+<script>
+const WHATS = "5599999999999";
+
+let produtos = [
+    {nome:"Mountain Bike Aro 29", preco:1299, img:"https://via.placeholder.com/300"},
+    {nome:"Bike Speed Pro", preco:2499, img:"https://via.placeholder.com/300"},
+    {nome:"Bike Urbana", preco:899, img:"https://via.placeholder.com/300"}
+];
+
+let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
+
+function render(){
+    let html="";
+    produtos.forEach((p,i)=>{
+        html+=`
+        <div class="card">
+            <img src="${p.img}">
+            <div class="card-body">
+                <h3>${p.nome}</h3>
+                <p class="preco">R$ ${p.preco}</p>
+                <button class="btn" onclick="add(${i})">Adicionar</button>
+            </div>
+        </div>`;
+    });
+    document.getElementById("produtos").innerHTML=html;
+}
+
+function add(i){
+    let item = produtos[i];
+    let existe = carrinho.find(p=>p.nome===item.nome);
+
+    if(existe) existe.qtd++;
+    else carrinho.push({...item, qtd:1});
+
+    salvar();
+}
+
+function salvar(){
+    localStorage.setItem("carrinho", JSON.stringify(carrinho));
+    atualizar();
+}
+
+function atualizar(){
+    let lista="";
+    let total=0;
+
+    carrinho.forEach((i,index)=>{
+        let sub=i.preco*i.qtd;
+        total+=sub;
+
+        lista+=`
+        <div class="item">
+        ${i.nome}<br>
+        ${i.qtd}x - R$ ${sub}
+        </div>`;
+    });
+
+    document.getElementById("lista").innerHTML=lista;
+    document.getElementById("total").innerText=total;
+
+    let msg="Pedido:%0A";
+    carrinho.forEach(i=>{
+        msg+=`${i.nome} x${i.qtd}%0A`;
+    });
+    msg+=`Total: R$ ${total}`;
+
+    document.getElementById("whats").href =
+    `https://wa.me/${WHATS}?text=${msg}`;
+}
+
+function finalizar(){
+    window.open(document.getElementById("whats").href);
+}
+
+render();
+atualizar();
+</script>
+
+</body>
+</html>
